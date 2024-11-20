@@ -83,7 +83,7 @@ RUN wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.
     && git clone https://github.com/straten/psrxml.git \
     && cd psrxml \
     && autoreconf --install --force \
-    && ./configure --prefix=/usr/local \
+    && CPPFLAGS="-I/usr/include/libxml2" LDFLAGS="-L/usr/lib -lxml2" ./configure --prefix=/usr/local \
     && make -j$(nproc) \
     && make install \
     && cd .. \
@@ -135,15 +135,19 @@ RUN wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.
     && apt-get autoremove -y \
     && rm -rf /src/*
 
-# Create psr user which will be used to run commands with reduced privileges
+# Create psr user and set up directories
 RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
     echo "psr:psr" | chpasswd && \
     mkdir -p /home/psr/.ssh && \
-    chown -R psr:psr /home/psr/.ssh
+    mkdir -p /work && \
+    mkdir -p /home/psr/software && \
+    chown -R psr:psr /home/psr/.ssh && \
+    chown -R psr:psr /work && \
+    chown -R psr:psr /home/psr/software
 
-# Define home and working directories
+# Define environment variables
 ENV HOME=/home/psr \
-    PSRHOME=$HOME/software \
+    PSRHOME=/home/psr/software \
     OSTYPE=linux \
     PGPLOT_DIR=/usr/lib/pgplot5 \
     PGPLOT_FONT=/usr/lib/pgplot5/grfont.dat \
@@ -156,13 +160,8 @@ ENV HOME=/home/psr \
 # Switch to psr user
 USER psr
 
-# Create working directory and set ownership
-RUN mkdir -p $PSRHOME
-WORKDIR $PSRHOME
-
-# Create a working directory
+# Set working directory
 WORKDIR /work
-RUN chown psr:psr /work
 
 # Default command
 CMD ["/bin/bash"]
