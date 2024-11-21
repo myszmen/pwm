@@ -1,43 +1,70 @@
-# Pulsar Analysis Tools Docker Environment
+# VPM - Virtual Pulsar Machine
 
-This Docker environment provides a ready-to-use setup for pulsar data analysis, including the following tools:
-- PSRCHIVE: A suite of tools for analyzing pulsar astronomical data
-- DSPSR: A flexible digital signal processing software for pulsar astronomy
-- PSRXML: A tool for handling pulsar data in XML format
-- PSRSALSA: A suite of tools for pulsar analysis focused on single-pulse studies
-- Julia: A high-level programming language for numerical analysis and scientific computing
+A Docker-based virtual environment for pulsar data analysis, including tools like `psrstat` and `pazi`. VPM is designed to work with `.hp` (and other pulsar data) files and supports graphical interfaces through X11 forwarding.
 
-## Building the Docker Image
+## Prerequisites
 
-To build the Docker image, run the following command in this directory:
+- Docker installed on your system
+- X11 server running (typically already running on Linux desktop systems)
 
-```bash
-docker build -t pulsar-tools .
-```
+## Building VPM
 
-## Running the Container
-
-To run the container with a mounted working directory:
+Build the Docker image with:
 
 ```bash
-docker run -it -v $(pwd):/work pulsar-tools
+docker build -t vpm .
 ```
 
-This will mount your current directory to the `/work` directory inside the container.
+## Usage
 
-## Available Tools
+### Running VPM
 
-Once inside the container, you can use the following tools:
-- PSRCHIVE suite of commands (e.g., `psrsh`, `pdv`, `paz`, etc.)
-- DSPSR commands
-- PSRXML tools
-- PSRSALSA commands (e.g., `pspec`, `SNRcount`, etc.)
-- Julia programming language (command: `julia`)
+Run the container with your data directory mounted:
 
-## Environment Variables
+```bash
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /path/to/your/data:/home/psr/data \
+  --net=host \
+  vpm bash
+```
 
-The following environment variables are pre-configured:
-- `LD_LIBRARY_PATH`: Set to include `/usr/local/lib`
-- `PGPLOT_DIR`: Set to `/usr/lib/pgplot5`
-- `PGPLOT_FONT`: Set to `/usr/lib/pgplot5/grfont.dat`
-- `PATH`: Updated to include PSRSALSA binaries
+Replace `/path/to/your/data` with the actual path to your pulsar data files.
+
+### Using Pulsar Tools
+
+Once inside VPM, you can use various pulsar analysis tools:
+
+#### Using psrstat
+```bash
+psrstat your_pulsar_file.hp
+```
+
+#### Using pazi (with graphical interface)
+```bash
+pazi your_pulsar_file.hp
+```
+
+## Data Management
+
+VPM is configured to mount your local data directory to `/home/psr/data` inside the container. This means:
+- Your data files remain on your host system
+- Any changes to files are immediately visible both inside and outside the container
+- You can easily work with new data files without rebuilding the container
+
+## Troubleshooting
+
+If graphical applications don't work:
+- Check if your DISPLAY environment variable is set correctly
+- Verify that X11 is running on your host system
+
+If you get permission errors:
+- Check the ownership of your data files
+- Ensure your user has read/write permissions for the mounted directory
+
+## Notes
+
+- VPM runs as the `psr` user to ensure proper file permissions
+- PGPLOT is configured for X11 display
+- The working directory is set to `/home/psr/data` by default

@@ -1,10 +1,10 @@
-# Use Ubuntu as the base image
-FROM ubuntu:22.04
+# Build stage
+FROM ubuntu:22.04 as builder
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install all required packages in a single layer and clean up in the same layer to reduce size
+# Install build dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
         build-essential \
         git \
@@ -46,14 +46,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         libltdl-dev \
         libblas-dev \
         liblapack-dev \
-        openssh-server \
-        latex2html \
         xorg \
         bc \
         xauth \
         locales \
         autotools-dev \
-    && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
     && rm -rf /var/cache/apt/archives/*
 
@@ -70,7 +67,7 @@ RUN pip install --no-cache-dir pip -U && \
 # Create working directory for building tools
 WORKDIR /src
 
-# Install SWIG, PSRXML, PSRCHIVE, DSPSR, and PSRSALSA in a single layer to reduce image size
+# Build all software
 RUN wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.tar.gz \
     && tar -xf swig-4.0.1.tar.gz \
     && cd swig-4.0.1 \
@@ -121,19 +118,52 @@ RUN wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.
     && cp bin/* /usr/local/bin/ \
     && cd .. \
     && rm -rf psrsalsa \
-    # Clean up build dependencies
-    && apt-get purge -y \
-        build-essential \
-        git \
-        wget \
-        autoconf \
-        automake \
-        libtool \
-        pkg-config \
-        cmake \
-        python3-dev \
-    && apt-get autoremove -y \
     && rm -rf /src/*
+
+# Runtime stage
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install runtime dependencies only
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-pip \
+        python3-tk \
+        libfftw3-3 \
+        libgsl27 \
+        libpng16-16 \
+        libx11-6 \
+        pgplot5 \
+        libcfitsio9 \
+        libpgplot0 \
+        csh \
+        expect \
+        hwloc \
+        libpcre2-8-0 \
+        libpcre3 \
+        libhdf5-103-1 \
+        libxml2 \
+        libgomp1 \
+        libquadmath0 \
+        xorg \
+        bc \
+        xauth \
+        locales \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -rf /var/cache/apt/archives/*
+
+# Set up locale information
+RUN localedef -i en_AU -c -f UTF-8 -A /usr/share/locale/locale.alias en_AU.UTF-8
+ENV LANG=en_AU.utf8 \
+    LC_ALL=en_AU.utf8 \
+    LANGUAGE=en_AU.utf8
+
+# Install required Python packages
+RUN pip install --no-cache-dir numpy==1.23.5 scipy matplotlib ipython -U
+
+# Copy built files from builder stage
+COPY --from=builder /usr/local /usr/local
 
 # Create psr user and set up directories
 RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
@@ -145,7 +175,7 @@ RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
     chown -R psr:psr /work && \
     chown -R psr:psr /home/psr/software
 
-# Define environment variables
+# Set environment variables
 ENV HOME=/home/psr \
     PSRHOME=/home/psr/software \
     OSTYPE=linux \
@@ -157,11 +187,16 @@ ENV HOME=/home/psr \
     LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/pgplot5/lib:$LD_LIBRARY_PATH \
     PATH=$PATH:/usr/local/pulsar/bin
 
-# Switch to psr user
+# Environment variables for X11 forwarding and PGPLOT
+ENV DISPLAY=:0 \
+    QT_X11_NO_MITSHM=1 \
+    PGPLOT_DEV=/xwin
+
+# switch to psr user
 USER psr
 
 # Set working directory
-WORKDIR /work
+WORKDIR /home/psr/data
 
 # Default command
 CMD ["/bin/bash"]
