@@ -7,7 +7,17 @@ A Docker-based virtual environment for pulsar data analysis, including tools lik
 - Docker installed on your system
 - X11 server running (typically already running on Linux desktop systems)
 
-## Building VPM
+## Installation
+
+You can either pull the pre-built image from Docker Hub or build it yourself.
+
+### Option 1: Pull from Docker Hub (Recommended)
+
+```bash
+docker pull myszmen/vpm:latest
+```
+
+### Option 2: Build Locally
 
 Build the Docker image with:
 
@@ -27,7 +37,7 @@ docker run -it --rm \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /path/to/your/data:/home/psr/data \
   --net=host \
-  vpm bash
+  myszmen/vpm:latest bash
 ```
 
 ### Running VPM over SSH
@@ -52,7 +62,7 @@ docker run -it --rm \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /path/to/your/data:/home/psr/data \
   --net=host \
-  vpm bash
+  myszmen/vpm:latest bash
 ```
 
 Replace `/path/to/your/data` with the actual path to your pulsar data files.
