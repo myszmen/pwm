@@ -17,13 +17,38 @@ docker build -t vpm .
 
 ## Usage
 
-### Running VPM
+### Running VPM Locally
 
 Run the container with your data directory mounted:
 
 ```bash
 docker run -it --rm \
   -e DISPLAY=$DISPLAY \
+  -v /tmp/.X11-unix:/tmp/.X11-unix \
+  -v /path/to/your/data:/home/psr/data \
+  --net=host \
+  vpm bash
+```
+
+### Running VPM over SSH
+
+When connecting to a remote server with SSH, use these steps:
+
+1. Connect to the server with X11 forwarding:
+```bash
+ssh -X username@server
+```
+
+2. Run the container with proper X11 authentication:
+```bash
+XAUTH=/tmp/.docker.xauth
+touch $XAUTH
+xauth nlist $DISPLAY | sed -e 's/^..../ffff/' | xauth -f $XAUTH nmerge -
+
+docker run -it --rm \
+  -e DISPLAY=$DISPLAY \
+  -e XAUTHORITY=$XAUTH \
+  -v $XAUTH:$XAUTH \
   -v /tmp/.X11-unix:/tmp/.X11-unix \
   -v /path/to/your/data:/home/psr/data \
   --net=host \
@@ -56,7 +81,10 @@ VPM is configured to mount your local data directory to `/home/psr/data` inside 
 ## Troubleshooting
 
 If graphical applications don't work:
-- Check if your DISPLAY environment variable is set correctly
+- Make sure you connected with `ssh -X` or `ssh -Y`
+- Check if your DISPLAY environment variable is set correctly (`echo $DISPLAY`)
+- Try running a simple X11 application like `xeyes` to test X11 forwarding
+- Check if xauth is installed on both local and remote systems
 - Verify that X11 is running on your host system
 
 If you get permission errors:

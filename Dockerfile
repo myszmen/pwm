@@ -1,5 +1,5 @@
 # Build stage
-FROM ubuntu:22.04 as builder
+FROM ubuntu:22.04 AS builder
 
 # Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -190,7 +190,8 @@ ENV HOME=/home/psr \
 # Environment variables for X11 forwarding and PGPLOT
 ENV DISPLAY=:0 \
     QT_X11_NO_MITSHM=1 \
-    PGPLOT_DEV=/xwin
+    PGPLOT_DEV=/xwin \
+    XAUTHORITY=/tmp/.docker.xauth
 
 # switch to psr user
 USER psr
