@@ -67,8 +67,14 @@ RUN pip install --no-cache-dir pip -U && \
 # Create working directory for building tools
 WORKDIR /src
 
-# Build all software
-RUN wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.tar.gz \
+# Install Julia 1.8.3
+RUN wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.3-linux-x86_64.tar.gz \
+    && tar -xvzf julia-1.8.3-linux-x86_64.tar.gz \
+    && mv julia-1.8.3 /opt/julia \
+    && ln -s /opt/julia/bin/julia /usr/local/bin/julia \
+    && rm julia-1.8.3-linux-x86_64.tar.gz \
+    # Install SWIG
+    && wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.tar.gz \
     && tar -xf swig-4.0.1.tar.gz \
     && cd swig-4.0.1 \
     && ./configure --prefix=/usr/local \
@@ -164,6 +170,7 @@ RUN pip install --no-cache-dir numpy==1.23.5 scipy matplotlib ipython -U
 
 # Copy built files from builder stage
 COPY --from=builder /usr/local /usr/local
+COPY --from=builder /opt/julia /opt/julia
 
 # Create psr user and set up directories
 RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
@@ -179,13 +186,14 @@ RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
 ENV HOME=/home/psr \
     PSRHOME=/home/psr/software \
     OSTYPE=linux \
+    TEMPO2=/usr/local/share/tempo2 \
     PGPLOT_DIR=/usr/lib/pgplot5 \
     PGPLOT_FONT=/usr/lib/pgplot5/grfont.dat \
     PGPLOT_BACKGROUND=white \
     PGPLOT_FOREGROUND=black \
     PGPLOT_DEV=/xs \
-    LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/pgplot5/lib:$LD_LIBRARY_PATH \
-    PATH=$PATH:/usr/local/pulsar/bin
+    LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/pgplot5/lib \
+    PATH=/usr/local/pulsar/bin:$PATH
 
 # Environment variables for X11 forwarding and PGPLOT
 ENV DISPLAY=:0 \
