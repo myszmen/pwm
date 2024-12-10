@@ -67,12 +67,16 @@ RUN pip install --no-cache-dir pip -U && \
 # Create working directory for building tools
 WORKDIR /src
 
-# Install Julia 1.8.3
-RUN wget https://julialang-s3.julialang.org/bin/linux/x64/1.8/julia-1.8.3-linux-x86_64.tar.gz \
-    && tar -xvzf julia-1.8.3-linux-x86_64.tar.gz \
-    && mv julia-1.8.3 /opt/julia \
+# Set the environment variable with the Julia version
+ENV JULIA_VERSION=1.10.7
+ENV JULIA_VERSION_SHORT=1.10
+
+# Install Julia
+RUN wget -q https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_VERSION_SHORT}/julia-${JULIA_VERSION}-linux-x86_64.tar.gz \
+    && tar -xzf julia-${JULIA_VERSION}-linux-x86_64.tar.gz \
+    && mv julia-${JULIA_VERSION} /opt/julia \
     && ln -s /opt/julia/bin/julia /usr/local/bin/julia \
-    && rm julia-1.8.3-linux-x86_64.tar.gz \
+    && rm julia-${JULIA_VERSION}-linux-x86_64.tar.gz \
     # Install SWIG
     && wget https://sourceforge.net/projects/swig/files/swig/swig-4.0.1/swig-4.0.1.tar.gz \
     && tar -xf swig-4.0.1.tar.gz \
