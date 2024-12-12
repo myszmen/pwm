@@ -138,6 +138,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
 	vim \
+	git \
+	build-essential \
+	xvfb \
+	evince \
+	x11vnc \
+	x11-apps \
         python3 \
         python3-pip \
         python3-tk \
@@ -201,16 +207,28 @@ ENV HOME=/home/psr \
     PATH=/usr/local/pulsar/bin:$PATH
 
 # Environment variables for X11 forwarding and PGPLOT
-ENV DISPLAY=:0 \
+ENV DISPLAY=:99 \
     QT_X11_NO_MITSHM=1 \
     PGPLOT_DEV=/xwin \
     XAUTHORITY=/tmp/.docker.xauth
 
+
 # switch to psr user
 USER psr
 
+# Clone usefull repositories 
+RUN git clone https://github.com/aszary/spa.git /home/psr/software/spa
+RUN git clone https://github.com/aszary/spat.git /home/psr/software/spat
+RUN git clone https://github.com/aszary/spats.git /home/psr/software/spats
+
+# Add julia libraries
+WORKDIR /home/psr/software/spat
+RUN Xvfb :99 -screen 0 1920x1080x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.precompile()'
+RUN Xvfb :99 -screen 0 1920x1080x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()'
+
+
 # Set working directory
-WORKDIR /home/psr/data
+WORKDIR /home/psr/
 
 # Default command
 CMD ["/bin/bash"]
