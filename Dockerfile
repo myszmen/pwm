@@ -212,7 +212,6 @@ ENV DISPLAY=:99 \
     PGPLOT_DEV=/xwin \
     XAUTHORITY=/tmp/.docker.xauth
 
-
 # switch to psr user
 USER psr
 
@@ -223,12 +222,20 @@ RUN git clone https://github.com/aszary/spats.git /home/psr/software/spats
 
 # Add julia libraries
 WORKDIR /home/psr/software/spat
-RUN Xvfb :99 -screen 0 1920x1080x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.precompile()'
-RUN Xvfb :99 -screen 0 1920x1080x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()'
+RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.add("Conda");using Conda; Conda.add("matplotlib");Pkg.precompile();'
+RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()'
 
 
 # Set working directory
 WORKDIR /home/psr/
+
+USER root
+# starting script
+COPY scripts/startx.sh /home/psr/startx.sh
+RUN mkdir /home/psr/log && chown psr:psr /home/psr/log && chown psr:psr /home/psr/startx.sh && chmod +x /home/psr/startx.sh
+#RUN mkdir -p /var/log && chmod 777 /var/log
+
+USER psr
 
 # Default command
 CMD ["/bin/bash"]
