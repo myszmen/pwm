@@ -95,6 +95,28 @@ RUN wget -q https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_VERSION_SHO
     && make install \
     && cd .. \
     && rm -rf psrxml \
+    # Install TEMPO
+    && git clone https://git.code.sf.net/p/tempo/tempo \
+    && cd tempo \
+    && ./prepare \
+    && ./configure --prefix=/usr/local \
+    && make \
+    && make install \
+    && cd .. \
+    # Install TEMPO2
+    && git clone https://bitbucket.org/psrsoft/tempo2.git \
+    && cd tempo2 \
+    # A fix to get rid of: returned a non-zero code: 126.
+    && sync && perl -pi -e 's/chmod \+x/#chmod +x/' bootstrap \
+    && ./bootstrap \
+    # without --with-calceph=$CALCEPH/install/lib CPPFLAGS="$CPPFLAGS -I"$CALCEPH"/install/include" LDFLAGS="-L"$CALCEPH"/install/lib"
+    && ./configure --x-libraries=/usr/lib/x86_64-linux-gnu --enable-shared --enable-static --with-pic F77=gfortran \
+    && make -j $(nproc) \
+    && make install \
+    && make plugins-install \
+    && cd T2runtime/clock \
+    && touch meerkat2gps.clk && echo "# UTC(meerkat) UTC(GPS)" > meerkat2gps.clk && echo "#" >> meerkat2gps.clk && echo "50155.00000 0.0" >> meerkat2gps.clk && echo "58000.00000 0.0" >> meerkat2gps.clk \
+    && cd /src \
     # Install PSRCHIVE
     && git clone https://git.code.sf.net/p/psrchive/code psrchive \
     && cd psrchive \
@@ -127,8 +149,8 @@ RUN wget -q https://julialang-s3.julialang.org/bin/linux/x64/${JULIA_VERSION_SHO
     && mkdir -p /usr/local/bin \
     && cp bin/* /usr/local/bin/ \
     && cd .. \
-    && rm -rf psrsalsa \
-    && rm -rf /src/*
+    && rm -rf psrsalsa
+    #&& rm -rf /src/*
 
 # Runtime stage
 FROM ubuntu:22.04
@@ -141,9 +163,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	git \
 	build-essential \
 	xvfb \
-	evince \
 	x11vnc \
 	x11-apps \
+        libblas-dev \
+        liblapack-dev \
         python3 \
         python3-pip \
         python3-tk \
@@ -171,17 +194,14 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/cache/apt/archives/*
 
 # Set up locale information
-RUN localedef -i en_AU -c -f UTF-8 -A /usr/share/locale/locale.alias en_AU.UTF-8
-ENV LANG=en_AU.utf8 \
-    LC_ALL=en_AU.utf8 \
-    LANGUAGE=en_AU.utf8
+RUN localedef -i en_GB -c -f UTF-8 -A /usr/share/locale/locale.alias en_GB.UTF-8
+ENV LANG=en_GB.utf8 \
+    LC_ALL=en_GB.utf8 \
+    LANGUAGE=en_GB.utf8
+
 
 # Install required Python packages
 RUN pip install --no-cache-dir numpy==1.23.5 scipy matplotlib ipython -U
-
-# Copy built files from builder stage
-COPY --from=builder /usr/local /usr/local
-COPY --from=builder /opt/julia /opt/julia
 
 # Create psr user and set up directories
 RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
@@ -197,7 +217,8 @@ RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
 ENV HOME=/home/psr \
     PSRHOME=/home/psr/software \
     OSTYPE=linux \
-    TEMPO2=/usr/local/share/tempo2 \
+    TEMPO=/home/psr/software/tempo \
+    TEMPO2=/home/psr/software/tempo2 \
     PGPLOT_DIR=/usr/lib/pgplot5 \
     PGPLOT_FONT=/usr/lib/pgplot5/grfont.dat \
     PGPLOT_BACKGROUND=white \
@@ -206,11 +227,18 @@ ENV HOME=/home/psr \
     LD_LIBRARY_PATH=/usr/local/lib:/usr/lib/pgplot5/lib \
     PATH=/usr/local/pulsar/bin:$PATH
 
+
 # Environment variables for X11 forwarding and PGPLOT
 ENV DISPLAY=:99 \
     QT_X11_NO_MITSHM=1 \
     PGPLOT_DEV=/xwin \
     XAUTHORITY=/tmp/.docker.xauth
+
+# Copy built files from builder stage
+COPY --from=builder /usr/local /usr/local
+COPY --from=builder /opt/julia /opt/julia
+COPY --from=builder /src/tempo $TEMPO
+COPY --from=builder /src/tempo2 $TEMPO2
 
 # switch to psr user
 USER psr
@@ -225,7 +253,6 @@ WORKDIR /home/psr/software/spat
 RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.add("Conda");using Conda; Conda.add("matplotlib");Pkg.precompile();'
 RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()'
 
-
 # Set working directory
 WORKDIR /home/psr/
 
@@ -233,9 +260,13 @@ USER root
 # starting script
 COPY scripts/startx.sh /home/psr/startx.sh
 RUN mkdir /home/psr/log && chown psr:psr /home/psr/log && chown psr:psr /home/psr/startx.sh && chmod +x /home/psr/startx.sh
-#RUN mkdir -p /var/log && chmod 777 /var/log
+# tempo and tempo2 
+RUN chown psr:psr $TEMPO -R && chown psr:psr $TEMPO2 -R
 
 USER psr
+
+# Set working directory
+WORKDIR /home/psr/
 
 # Default command
 CMD ["/bin/bash"]
