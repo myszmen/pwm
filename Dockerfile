@@ -209,9 +209,11 @@ RUN adduser --disabled-password --gecos 'unprivileged user' psr && \
     mkdir -p /home/psr/.ssh && \
     mkdir -p /work && \
     mkdir -p /home/psr/software && \
+    mkdir -p /home/psr/libs && \
     chown -R psr:psr /home/psr/.ssh && \
     chown -R psr:psr /work && \
-    chown -R psr:psr /home/psr/software
+    chown -R psr:psr /home/psr/software && \
+    chown -R psr:psr /home/psr/libs
 
 # Set environment variables
 ENV HOME=/home/psr \
@@ -249,19 +251,25 @@ RUN git clone https://github.com/aszary/spat.git /home/psr/software/spat
 RUN git clone https://github.com/aszary/spats.git /home/psr/software/spats
 
 # Add julia libraries
-WORKDIR /home/psr/software/spat
 RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.add("Conda");using Conda; Conda.add("matplotlib");Pkg.precompile();'
 RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()'
 
+
 # Set working directory
-WORKDIR /home/psr/
+WORKDIR /home/psr
+
+# Add python packages
+RUN git clone https://github.com/aszary/drift_data.git /home/psr/software/drift_data
+COPY libs/requirements_drift_data.txt libs/.
+RUN pip install --no-cache-dir -r libs/requirements_drift_data.txt
+
 
 USER root
 # starting script
 COPY scripts/startx.sh /home/psr/startx.sh
 RUN mkdir /home/psr/log && chown psr:psr /home/psr/log && chown psr:psr /home/psr/startx.sh && chmod +x /home/psr/startx.sh
-# tempo and tempo2 
-RUN chown psr:psr $TEMPO -R && chown psr:psr $TEMPO2 -R
+# tempo and tempo2 e
+RUN chown psr:psr $TEMPO -R && chown psr:psr $TEMPO2 -R && chown psr:psr /home/psr/libs -R
 
 USER psr
 
