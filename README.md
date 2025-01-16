@@ -16,6 +16,12 @@ You can either pull the pre-built image from Docker Hub or build it yourself.
 docker pull myszmen/vpm:latest
 ```
 
+better use the following for now
+
+```bash
+docker pull memento1315189/vpm2:latest
+```
+
 ### Option 2: Build Locally
 
 Build the Docker image with:
