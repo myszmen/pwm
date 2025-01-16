@@ -1,11 +1,10 @@
 # VPM - Virtual Pulsar Machine
 
-A Docker-based virtual environment for pulsar data analysis, including tools like `PSRCHIVE` and `DSPSR`. VPM is designed to work with `.hp` (and other pulsar data) files and supports graphical interfaces through X11 forwarding.
+A Docker-based virtual environment for pulsar data analysis, including tools like `PSRCHIVE` and `DSPSR`. VPM is designed to work with `PSRFITS` (and other pulsar data) files and supports graphical interfaces through X11 forwarding or Xvfb and VNC (no X11 server running required).
 
 ## Prerequisites
 
 - Docker installed on your system
-- X11 server running (typically already running on Linux desktop systems)
 
 ## Installation
 
