@@ -272,6 +272,7 @@ COPY scripts/startx.sh /home/psr/startx.sh
 RUN mkdir /home/psr/log && chown psr:psr /home/psr/log && chown psr:psr /home/psr/startx.sh && chmod +x /home/psr/startx.sh
 # tempo and tempo2 e
 RUN chown psr:psr $TEMPO -R && chown psr:psr $TEMPO2 -R && chown psr:psr /home/psr/libs -R
+RUN mkdir /home/psr/output && chown psr:psr /home/psr/output
 
 USER psr
 
