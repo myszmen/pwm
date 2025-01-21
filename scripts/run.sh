@@ -3,7 +3,7 @@
 docker run -it --rm \
 	-e DISPLAY=:99 \
 	-v /tmp/.X11-unix:/tmp/.X11-unix \
-	-v $(pwd)/example_data:/home/psr/data \
+	-v /home/aszary/data:/home/psr/data \
 	--net=host \
 	vpm:latest /bin/bash
 
