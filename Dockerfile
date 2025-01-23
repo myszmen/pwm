@@ -159,6 +159,7 @@ ENV DEBIAN_FRONTEND=noninteractive
 
 # Install runtime dependencies only
 RUN apt-get update && apt-get install -y --no-install-recommends \
+	xpdf \
 	vim \
 	git \
 	build-essential \
