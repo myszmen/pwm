@@ -243,6 +243,10 @@ COPY --from=builder /opt/julia /opt/julia
 COPY --from=builder /src/tempo $TEMPO
 COPY --from=builder /src/tempo2 $TEMPO2
 
+# xvfb run fixed! (_XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.)
+USER root
+RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
+
 # switch to psr user
 USER psr
 
@@ -253,9 +257,10 @@ RUN git clone https://github.com/aszary/spats.git /home/psr/software/spats
 RUN git clone https://github.com/aszary/drift2.git /home/psr/software/drift2
 
 # Add julia libraries
-RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.add("Conda");using Conda; Conda.add("matplotlib");Pkg.precompile();'
-RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()'
-RUN Xvfb :99 -screen 0 1024x768x24 & julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/drift2");Pkg.instantiate()' #;Pkg.precompile()' # why precompile does not work? it works in the container
+RUN Xvfb :99 -screen 0 1024x768x24 & \
+	julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spat");Pkg.instantiate();Pkg.add("Conda");using Conda; Conda.add("matplotlib");Pkg.precompile();' && \
+	julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/spats");Pkg.instantiate();Pkg.precompile()' && \
+	julia -e 'ENV["PYTHON"]="";using Pkg; Pkg.activate("/home/psr/software/drift2");Pkg.instantiate();Pkg.precompile()' # why precompile does not work? it works in the container
 
 
 # Set working directory
