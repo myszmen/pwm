@@ -3,7 +3,7 @@
 
 # Check if a port number is provided
 if [ -z "$1" ]; then
-	echo "Usage: $0 <port-number>"
+	echo "Usage: $0 <port-number e.g 5900>"
 	exit 1
 fi
 
