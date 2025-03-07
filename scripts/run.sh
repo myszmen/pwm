@@ -16,5 +16,5 @@ docker run -it --rm \
         -v /tmp/.X11-unix:/tmp/.X11-unix \
         -v /home/aszary/data:/home/psr/data \
         --net=host \
-        vpm:latest /bin/bash
+        memento1315189/vpm2:latest /bin/bash
 
