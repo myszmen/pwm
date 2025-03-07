@@ -2,3 +2,4 @@ astropy
 pandas
 uncertainties
 sympy
+paramiko
