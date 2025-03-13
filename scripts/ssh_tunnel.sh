@@ -9,5 +9,5 @@ fi
 
 PORT=$1
 
-ssh -L $PORT:kopernik:$PORT -J aszary@kepler.ia.uz.zgora.pl aszary@kopernik.ia.uz.zgora.pl
+ssh -L $PORT:kopernik:$PORT -J aszary@kepler.ia.uz.zgora.pl aszary@kopernik.ia.uz.zgora.pl -o ServerAliveInterval=60 -o ServerAliveCountMax=5
 
