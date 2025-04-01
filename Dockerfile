@@ -207,7 +207,8 @@ ENV LANG=en_GB.utf8 \
 RUN pip install --no-cache-dir numpy==1.23.5 scipy matplotlib ipython -U
 
 # Create psr user and set up directories
-RUN adduser --disabled-password --gecos 'unprivileged user' --uid 1009 --gid 1009 psr && \
+RUN groupadd --gid 1009 psr && \
+    adduser --disabled-password --gecos 'unprivileged user' --uid 1009 --gid 1009 psr && \
     echo "psr:psr" | chpasswd && \
     mkdir -p /home/psr/.ssh && \
     mkdir -p /work && \
