@@ -247,8 +247,7 @@ COPY --from=builder /src/tempo $TEMPO
 COPY --from=builder /src/tempo2 $TEMPO2
 
 # xvfb run fixed! (_XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.)
-# root to psr (works?)
-USER psr
+USER root
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 # switch to psr user
