@@ -237,8 +237,8 @@ ENV HOME=/home/psr \
 # Environment variables for X11 forwarding and PGPLOT
 ENV DISPLAY=:99 \
     QT_X11_NO_MITSHM=1 \
-    PGPLOT_DEV=/xwin \
-    XAUTHORITY=/tmp/.docker.xauth
+    PGPLOT_DEV=/xwin
+    #XAUTHORITY=/tmp/.docker.xauth # not needed?
 
 # Copy built files from builder stage
 COPY --from=builder /usr/local /usr/local
@@ -247,7 +247,8 @@ COPY --from=builder /src/tempo $TEMPO
 COPY --from=builder /src/tempo2 $TEMPO2
 
 # xvfb run fixed! (_XSERVTransmkdir: ERROR: euid != 0,directory /tmp/.X11-unix will not be created.)
-USER root
+# root to psr (works?)
+USER psr
 RUN mkdir -p /tmp/.X11-unix && chmod 1777 /tmp/.X11-unix
 
 # switch to psr user
